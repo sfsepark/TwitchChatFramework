@@ -1,0 +1,23 @@
+/*
+    TWITCH CHAT FRAMEWORK.js
+    version : 1.0
+    developer : sfsepark@gmail.com
+*/
+
+chrome.runtime.sendMessage({type:'refresh'},function(result){
+    
+});
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        //Allow using this built library as an AMD module
+        //in another project. That other project will only
+        //see this AMD call, not the internal modules in
+        //the closure below.
+        define([], factory);
+    } else {
+        //Browser globals case. Just assign the
+        //result to a property on the global.
+        root.tcf = factory();
+    }
+}(this, function () {
