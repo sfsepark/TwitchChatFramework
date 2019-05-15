@@ -1195,6 +1195,8 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
         this.chat_view_list_button = null;
         this.chat_setting_balloon = null;
         this.chat_input = null;
+
+        this.picker_container = null;
     }
 
     /*
@@ -1230,6 +1232,7 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
             this.chat_view_list_button = cur_chat_view_list_button;
             this.chat_input = cur_chat_input;
     
+            /*
             var cur_style = this.frame.getAttribute('style');
             if(cur_style == null)  {
                 this.frame.setAttribute('style','display:none !important;');
@@ -1237,10 +1240,24 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
             else{
                 this.frame.setAttribute('style', cur_style + ';display:none !important;');
             }
+            */
+            
+            this.picker_container = this.emote_picker.parentElement;
+
             return true;
         }
     }
 
+    function hideEmotePicker(){
+
+        var cur_style = this.emote_picker.getAttribute('style');
+        if(cur_style == null)  {
+            this.emote_picker.setAttribute('style','display:none !important;');
+        }
+        else{
+            this.emote_picker.setAttribute('style', cur_style + ';display:none !important;');
+        }
+    } 
 
     return {
         parent_frame : null,
@@ -1251,10 +1268,12 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
         chat_setting_button : null,
         chat_input : null,
         chat_setting_balloon : null, // lazySearching
+        picker_container : null,
 
         clear : clear,
         register : register,
-        searchingTWDiv : searchingTWDiv
+        searchingTWDiv : searchingTWDiv,
+        hideEmotePicker : hideEmotePicker
     }
 
 });
@@ -1692,9 +1711,12 @@ define('chatTracker',[
     function init(){
         newChat.onLoadInit();
 
+        chatTarget.hideEmotePicker();
+
         for(var i = 0 ; i< pickerManager.length ;i  ++)
         {
-            newChat.appendPickerButton(pickerManager[i].getPickerButton());
+            chatTarget.picker_container.appendChild(pickerManager[i].getPickerButton());    
+            //newChat.appendPickerButton(pickerManager[i].getPickerButton());
         }
     }
 
@@ -2291,6 +2313,19 @@ define('tcf',
             */
             addTextToChatInput : function(html){
                 newChat.chat_input.innerHTML += html;
+            },
+            
+            get chatCursor(){
+                
+            },
+            set chatCursor(pos){
+
+            },
+            get chatText(){
+
+            },
+            set chatText(txt){
+
             },
             addStartChecker : function(startChecker){
                 startCheckers.push(startChecker);
