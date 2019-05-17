@@ -1,6 +1,6 @@
 /*
     TWITCH CHAT FRAMEWORK.js
-    version : 1.0
+    version : 1.1
     developer : sfsepark@gmail.com
 */
 
@@ -715,25 +715,29 @@ define('picker',['twitchTheme'],function(twitchTheme){
 
     //----------------------------------------------------
 
-    var newChat = null;
+    var chatTarget = null;
 
     var disableCheckObserver = function(cur_picker){
         var target;
         var observer ;
         var disableCheckCallback = function(mutationsList, observer){
-            for(var mutation of mutationsList){
-                if(mutation.type == 'childList'){
-                    var picker_frame = target.getElementsByClassName('nc-picker-frame');
 
-                    if(picker_frame.length == 0){
-                        cur_picker.turnOff();
-                    }
-                    else{
-                        if(!(picker_frame[0].getAttribute('picker-type') == cur_picker.type))
-                        {
+            console.log(mutationsList);
+            for(var mutation of mutationsList){
+                if(mutation.type == 'childList' && mutation.target == target){
+                    for(var addedNode of mutation.addedNodes){
+                        if(addedNode.getAttribute('data-a-target') == 'bits-card'){
                             cur_picker.turnOff();
                         }
-                    }
+                        else if(addedNode.classList.contains('nc-picker-frame')){
+                            cur_picker.turnOff();
+                        }
+                    }  
+                    for(var removedNode of mutation.removedNodes){
+                        if(removedNode.classList.contains('nc-picker-frame')){
+                            cur_picker.turnOff();
+                        }
+                    }              
                 }
             }
         }
@@ -742,10 +746,10 @@ define('picker',['twitchTheme'],function(twitchTheme){
 
         return {
             observe : function(){
-                if(newChat == null){
-                    newChat = require('newChat');
+                if(chatTarget == null){
+                    chatTarget = require('chatTarget');
                 }
-                target = newChat.picker_container;
+                target = chatTarget.picker_container.parentElement;
 
                 observer.observe(target, { childList: true });
             },
@@ -784,105 +788,116 @@ define('picker',['twitchTheme'],function(twitchTheme){
 
     picker.prototype.turnOn = function(){
 
-        //draw Frame
-        if(this.drawContentFrame != null)
-        {
-            this.contentFrame = this.drawContentFrame();
-        }
+        if(this.state == false){
+            //draw Frame
+            if(this.drawContentFrame != null)
+            {
+                this.contentFrame = this.drawContentFrame();
+            }
 
-        if(this.drawControlFrame != null)
-        {
-            this.controlFrame = this.drawControlFrame();
-        }
-    
-        //append picker frame
+            if(this.drawControlFrame != null)
+            {
+                this.controlFrame = this.drawControlFrame();
+            }
 
-        if(!(this.contentFrame == null && this.controlFrame == null) )
-        {
-            this.pickerFrame = originFrame.cloneNode(true);
+            //append picker frame
 
-            var pickerArea = this.pickerFrame.getElementsByClassName('nc-picker-content')[0];
-            this.pickerFrame.setAttribute('picker-type', this.type);
-            pickerArea.style['max-height'] = '271px';
+            if(!(this.contentFrame == null && this.controlFrame == null) )
+            {
+                this.pickerFrame = originFrame.cloneNode(true);
 
-            var cur_picker = this;
+                var pickerArea = this.pickerFrame.getElementsByClassName('nc-picker-content')[0];
+                this.pickerFrame.setAttribute('picker-type', this.type);
+                pickerArea.style['max-height'] = '271px';
 
-            this.pickerSizeInterval = setInterval(
-                function (){  
-                    try{
-                        var pickerArea = cur_picker.pickerFrame.getElementsByClassName('nc-picker-content');
+                var cur_picker = this;
 
-                        if(pickerArea.length == 0){
-                            cur_picker.turnOff();
-                        }else{
-                            pickerArea = pickerArea[0];
+                this.pickerSizeInterval = setInterval(
+                    function (){  
+                        try{
+                            var pickerArea = cur_picker.pickerFrame.getElementsByClassName('nc-picker-content');
 
-                            if(window.innerHeight < 498)
-                            {
-                                pickerArea.style['max-height'] = window.innerHeight-(498-271) + 'px';
-                            }
-                            else{
-                                pickerArea.style['max-height'] = '271px';
+                            if(pickerArea.length == 0){
+                                cur_picker.turnOff();
+                            }else{
+                                pickerArea = pickerArea[0];
+
+                                if(window.innerHeight < 498)
+                                {
+                                    pickerArea.style['max-height'] = window.innerHeight-(498-271) + 'px';
+                                }
+                                else{
+                                    pickerArea.style['max-height'] = '271px';
+                                }
                             }
                         }
+                        catch(e){
+                            cur_picker.turnOff();
+                        }
+                        
                     }
-                    catch(e){
-                        cur_picker.turnOff();
-                    }
-                    
+                    ,
+                    100
+                );
+
+                if(this.contentFrame != null)
+                {
+                    var scrollable_area = this.pickerFrame.getElementsByClassName('nc-picker-content scrollable-area')[0];
+                    var scroll_content = this.pickerFrame.getElementsByClassName('simplebar-scroll-content')[0];
+                    var scroll_frame = this.pickerFrame.getElementsByClassName('nc-pd-1')[0];
+
+                    scroll_frame.appendChild(this.contentFrame);
                 }
-                ,
-                100
-            );
 
-            if(this.contentFrame != null)
-            {
-                var scrollable_area = this.pickerFrame.getElementsByClassName('nc-picker-content scrollable-area')[0];
-                var scroll_content = this.pickerFrame.getElementsByClassName('simplebar-scroll-content')[0];
-                var scroll_frame = this.pickerFrame.getElementsByClassName('nc-pd-1')[0];
+                if(this.controlFrame != null){
+                    var controlFrameWrapper = document.createElement('div');
+                    controlFrameWrapper.classList.add('nc-picker-control')
+                    var emote_picker_frame = this.pickerFrame.getElementsByClassName('nc-picker')[0];
+                    emote_picker_frame.appendChild(controlFrameWrapper);
+                    controlFrameWrapper.appendChild(this.controlFrame);
+                }
 
-                scroll_frame.appendChild(this.contentFrame);
+                if(chatTarget == null)
+                {
+                    chatTarget  = require('chatTarget');
+                }
+                chatTarget.picker_container.parentElement.appendChild(this.pickerFrame);
+
+                if(this.onLoad != null && this.onLoad != undefined && typeof(this.onLoad) === 'function')
+                    this.onLoad();
+
             }
 
-            if(this.controlFrame != null){
-                var controlFrameWrapper = document.createElement('div');
-                controlFrameWrapper.classList.add('nc-picker-control')
-                var emote_picker_frame = this.pickerFrame.getElementsByClassName('nc-picker')[0];
-                emote_picker_frame.appendChild(controlFrameWrapper);
-                controlFrameWrapper.appendChild(this.controlFrame);
-            }
+            this.disableCheckObserver.observe();
 
-            if(newChat == null)
-            {
-                newChat = require('newChat');
-            }
-            newChat.picker_container.appendChild(this.pickerFrame);
-
-            if(this.onLoad != null && this.onLoad != undefined && typeof(this.onLoad) === 'function')
-                this.onLoad();
-
+            this.state = true;
         }
-
-        this.disableCheckObserver.observe();
-
-        this.state = true;
+        
     }
 
     picker.prototype.turnOff = function(){
 
-        clearInterval(this.pickerSizeInterval);
-        this.pickerSizeInterval = null;
+        if(this.state == true)
+        {
+            try{
+                chatTarget.picker_container.parentElement.removeChild(this.pickerFrame);
+            }
+            catch(e){            };
+            clearInterval(this.pickerSizeInterval);
+            this.pickerSizeInterval = null;
+    
+            this.disableCheckObserver.disconnect();
+    
+            if(this.onDestroy !== null && this.onDestroy !== undefined && typeof(this.onDestroy) === 'function')
+                this.onDestroy();
+    
+            this.pickerFrame = null;
+            this.contentFrame = null;
+            this.controlFrame = null;
+    
+            this.state = false;
+        }
 
-        this.disableCheckObserver.disconnect();
-
-        if(this.onDestroy !== null && this.onDestroy !== undefined && typeof(this.onDestroy) === 'function')
-            this.onDestroy();
-
-        this.pickerFrame = null;
-        this.contentFrame = null;
-        this.controlFrame = null;
-
-        this.state = false;
     }
 
     picker.prototype.setPickerImg = function(light, dark){
@@ -896,18 +911,62 @@ define('picker',['twitchTheme'],function(twitchTheme){
     picker.prototype.getPickerButton = function(){
 
         function switchPicker(picker){
+
+            function searchBitsCard(){
+
+                var bitCardFrame = null;
+
+                if(chatTarget == null)
+                {
+                    chatTarget  = require('chatTarget');
+                }
+                
+                bitCardFrame = chatTarget.searchingTWDiv(
+                    'bits-card-wrapper' , 
+                    'bits-card',
+                    chatTarget.picker_container.parentElement);
+
+                return bitCardFrame;
+            }
+    
+            function getBitsCardClose(bitsCard){
+
+                var closeButton = null;
+
+                if(chatTarget == null)
+                {
+                    chatTarget  = require('chatTarget');
+                }
+                closeButton = chatTarget.searchingTWDiv('tw-button-icon--small','bits-card-close-button',bitsCard);
+
+                return closeButton;
+            }
+
             var pre_picker = document.getElementsByClassName('nc-picker-frame');
 
-            if(newChat == null){
-                newChat = require('newChat');
+            if(chatTarget == null){
+                chatTarget = require('chatTarget');
+            }
+
+            var bitCardFrame = searchBitsCard();
+
+            if(bitCardFrame != null){
+                var closeButton = getBitsCardClose();
+
+                if(closeButton == null){
+                    return;
+                }
+                else{
+                    closeButton.click();
+                }
             }
 
             if(pre_picker.length > 0){
                 if(pre_picker[0].getAttribute('picker-type') == picker.type){
-                    newChat.picker_container.removeChild(pre_picker[0]);
+                    chatTarget.picker_container.parentElement.removeChild(pre_picker[0]);
                 }
                 else{
-                    newChat.picker_container.removeChild(pre_picker[0]);
+                    chatTarget.picker_container.parentElement.removeChild(pre_picker[0]);
                     picker.turnOn();
                 }
             }
