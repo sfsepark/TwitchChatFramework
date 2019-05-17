@@ -547,14 +547,21 @@ define('twitchTheme',[],function(){
     }
 
     Theme.prototype.changeThemeUI = function(target){
-        if(target.intergrityCheck() == true){
-            target.chat_setting_button.getElementsByClassName('chat_setting_img')[0].src =
-                this.setting_img_url;
-            target.viewer_check_button.getElementsByClassName('view_check_img')[0].src = 
-                this.viewer_check_img_url;
-            target.frame.setAttribute('class','new-chat ' + this.new_chat_css);
-    
+        try{
             this.changePickerUI();
+            if(target.frame.classList.contains(dark_theme.new_chat_css)){
+                target.frame.classList.replace(dark_theme.new_chat_css,this.new_chat_css); 
+            }
+            else if(target.frame.classList.contains(light_theme.new_chat_css)){
+                target.frame.classList.replace(light_theme.new_chat_css,this.new_chat_css); 
+            }
+            else{
+                target.frame.classList.add(this.new_chat_css); 
+            }
+            
+        }
+        catch(e){
+
         }
     }    
 
@@ -642,7 +649,7 @@ define('twitchTheme',[],function(){
     }
 
 
-    //target : newChat
+    //target : chatTarget
     function colorCheckStart(target){
         var chatSectionList = document.getElementsByTagName('section');
 
@@ -1004,230 +1011,7 @@ define('picker',['twitchTheme'],function(twitchTheme){
     return picker;
 })
 ;
-define('chatUsingTmi',['chatTarget'],function(chatTarget) {
-    var msg_KR_dict = {
-        msg_banned : "이 방에서 영구히 정지당하였습니다."
-    }
-
-    var join_cache = (function(){
-
-        var cache = [];
-
-        return {
-            join : function(channel){
-                return new Promise(function(resolve, reject){
-
-                    if(cache.includes(channel)){
-                        var index = cache.indexOf(channel);
-                        if (index !== -1) cache.splice(index, 1);
-                    }
-
-                    if(!chatClient.getChannels().includes('#' + channel))
-                    {
-                        chatClient.join(channel).then(function(data){
-                            cache.push(channel);
-                            resolve(channel);
-                        }).catch(function(data){
-                            reject(data);
-                        })                          
-                    }
-                    else{
-                        cache.push(channel);
-                        resolve(channel);
-                    }
-
-                    if(cache.length > 5){
-                        var victim = cache.shift();
-                        chatClient.part(victim);
-                    }
-                       
-                });
-            }
-        };
-    })();
-
-    var user_info;
-    var connectPromise = null;
-    var chatClient = null;
-
-    var nc_before = 'nc-before';
-    var nc_status = 'nc-status';
-
-    var curLogDiv = null;
-
-    var addChatLog = function(logDiv, message){
-        var ncStatus = document.createElement('div');
-        ncStatus.classList.add('chat-line__status');
-        ncStatus.classList.add(nc_status);
-        ncStatus.innerText = message;
-
-        var logs = logDiv.children;
-
-        if(logs.length > 0){
-            curLogDiv = logDiv;
-
-            logDiv.appendChild(ncStatus);
-
-            chatLogObserver.disconnect();
-            chatLogObserver.observe(logDiv,{childList : true});
-        }
-    }
-
-    var chatLogObserver = new MutationObserver(function(mutations){
-        mutations.forEach(function(mutation){
-            if(mutation.type == "childList"){
-                while(curLogDiv.firstChild.classList.contains(nc_status)){
-                    curLogDiv.removeChild(curLogDiv.firstChild)   ; 
-                }
-            }   
-        });
-    })
-
-    var connectPromise = new Promise(function(resolve, reject){
-
-        function connect(user_info){
-            var authToken = user_info.authToken;
-            var userName = user_info.login;
-    
-            var chatClientOptions = {
-                options: {
-                    debug: false
-                },
-                connection: {
-                    reconnect: true,
-                    secure : true
-                },
-                identity: {
-                    username: userName,
-                    password: "oauth:" + authToken
-                }
-            }
-    
-            chatClient = new tmi.client(chatClientOptions);            
-            connectPromise = chatClient.connect();
-            resolve(true);
-
-            connectPromise.then(function(result){
-                chatClient.on("notice", function(channel, msgid, message){
-                    if(chatTarget.frame != null){
-                        console.log('notice : ',channel,msgid, message);
-                        var parentFrame = chatTarget.frame.parentElement;
-                        var chatLine = parentFrame.getElementsByClassName('chat-list__lines')[0];
-                        var logLine = chatLine.getElementsByClassName('tw-flex-grow-1 tw-full-height tw-pd-b-1')[0];
-
-                        if(logLine.getAttribute('role') == 'log'){
-                            addChatLog(logLine,message);                            
-                        }
-                    }
-                });
-            });
-            
-        }
-
-        chrome.runtime.sendMessage({type:'user_info'}, function(response)
-        {      
-            if(chatClient != null){
-                chatClient.disconnect();
-            }
-
-            if(response != null)
-            { 
-                if(response.authToken != null){
-                    connect(response);
-                }
-                else{
-                    chatClient = null;
-                    resolve(true); // 유저가 로그인 되어있지 않더라도 chatMethod는 작동해야한다.(단, 채팅은 보내지면 안 됨)
-                }
-            }
-            else{
-                chatClient = null;
-                resolve(false);
-            }
-        });
-    
-    });
-
-
-    /*
-
-    chrome.runtime.onMessage.addListener(
-        function(request){
-            if(request != null && request.type == 'user_info'){
-                if(chatClient != null){
-                    chatClient.disconnect();
-                }
-                user_info = request.data;
-                if(request.data != null){
-                    connect(request.data);
-                }
-                else{
-                    chatClient = null;
-                }
-            }
-        }
-    );
-*/
-
-    var chatClient = null;
-    var chatClientConnected = false;
-    var chatClientChannel = '';
-
-    return {
-        sendChat :
-            function(message)
-            {
-                if(chatClientConnected && chatClientChannel != '')
-                {
-                    chatClient.say(chatClientChannel, message);
-                }
-                else{
-                    if(user_info == null)
-                    {
-                        if(chatTarget.send_button != undefined && chatTarget.send_button != null){
-                            try{
-                                chatTarget.send_button.click();       
-                            }
-                            catch(e){};
-                        }
-                    }
-                }
-            },
-
-        readyChat :
-            function(channel)
-            {
-                if(chatClient != null)
-                {
-                    connectPromise.then(function(){
-                        join_cache.join(channel).then(function(channel){
-                            chatClientChannel = channel;
-                            chatClientConnected = true;
-                        }).catch(function(err){
-                            console.log(err);
-                        })
-                    });
-                }
-            },
-        
-        //트위치 이모티콘을 이용한 chatMethod에서만 pause/restart 기능이 필요하다.
-        pauseReadyChat : function(){ },
-        restartReadyChat :  function()  { },
-    
-        cleanUpReadyChat :
-            function()
-            {
-                chatClientConnected = false;
-                chatClientChannel = '';
-            },
-        connectPromise : connectPromise
-            
-    }
-});
-
-define("chat_using_tmi", function(){});
-
-define('chatTarget',['chat_using_tmi'],function(chatMethod){
+define('chatTarget',[],function(){
     function searchingTWDiv(className , data_a_target , frame)
     {
         var target = null;
@@ -1290,16 +1074,6 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
             this.chat_setting_button = cur_chat_setting_button;
             this.chat_view_list_button = cur_chat_view_list_button;
             this.chat_input = cur_chat_input;
-    
-            /*
-            var cur_style = this.frame.getAttribute('style');
-            if(cur_style == null)  {
-                this.frame.setAttribute('style','display:none !important;');
-            }
-            else{
-                this.frame.setAttribute('style', cur_style + ';display:none !important;');
-            }
-            */
             
             this.picker_container = this.emote_picker.parentElement;
 
@@ -1342,8 +1116,8 @@ define('chatTarget',['chat_using_tmi'],function(chatMethod){
 define("chat_target", function(){});
 
 define('newChat',["twitchTheme",
-"chatTarget",'chatUsingTmi'],
-    function(twitchTheme,chatTarget,chatMethod){
+"chatTarget"],
+    function(twitchTheme,chatTarget){
 
     //init newChat object
 
@@ -1699,17 +1473,14 @@ define("new_chat", function(){});
 
 define('chatTracker',[
     "config",
-    'chatUsingTmi',
     'chatTarget',
     'newChat',
     'twitchTheme'
-], function(config,chatUsingTmi,chatTarget,newChat,twitchTheme){
+], function(config,chatTarget,newChat,twitchTheme){
 
     //--------------------------------------------------
 
     var pickerManager = [];
-
-    var chatMethod = chatUsingTmi;
     
     var INIT_STOP = 0 , INIT_PENDING = 1, INIT_READY = 2, INIT_DONE = 3;
     var INIT_STATUS = INIT_STOP;
@@ -1722,48 +1493,43 @@ define('chatTracker',[
 
     function startMaster(streamer){
 
-        chatMethod.cleanUpReadyChat();                        
+        //chatMethod.cleanUpReadyChat();                        
 
-        newChat.create();
+        //newChat.create();
 
-        chatTarget.parent_frame = chatTarget.frame.parentElement;
-        chatTarget.parent_frame.appendChild(newChat.frame);
+        //chatTarget.parent_frame = chatTarget.frame.parentElement;
+        //chatTarget.parent_frame.appendChild(newChat.frame);
         
-        twitchTheme.colorCheckStart(newChat);
+        twitchTheme.colorCheckStart(chatTarget);
         
-        chatMethod.readyChat(streamer);        
+        //chatMethod.readyChat(streamer);        
                                 
         START_STATUS = START_READY;
     }
 
     function slaveCheck(){
-        setTimeout(function(){
-            if(newChat.findFrame()){
-                START_STATUS = START_READY;
-            }
-            else{
-                slaveCheck();
-            }
-        },300);
+
+        START_STATUS = START_READY;
+
     }
 
 
     function terminate(isMaster){        
         if(isMaster){
             try{
-                newChat.turnOffPicker();
+
             }
             catch(e){};
 
-            chatMethod.cleanUpReadyChat();
+            //chatMethod.cleanUpReadyChat();
             twitchTheme.colorCheckStop();
             
             chatTarget.clear();
-            newChat.delete();
-            newChat.clear();
+            //newChat.delete();
+            //newChat.clear();
         }
         else{
-            newChat.clear();
+            //newChat.clear();
         }
     }
 
@@ -1878,7 +1644,22 @@ define('chatTracker',[
                     pickerManager.splice(ax, 1);
                 }
             }
-        }
+        },
+
+        get chatCursor(){
+            delete chatCursor;
+            
+        },
+        set chatCursor(pos){
+            chatTracker.chatCursor = pos;
+        },
+        get chatText(){
+            delete chatText;
+            return chatTracker.chatText;
+        },
+        set chatText(txt){
+            chatTracker.chatText = txt;
+        },
     }
 });
 
@@ -2152,9 +1933,9 @@ define('observer',[],function(){
     }
 });
 define('tcf',
-    ['newChat','chatTracker','tcfConfig','picker','observer','chatUsingTmi'],
+    ['chatTracker','tcfConfig','picker','observer'],
     function(
-        newChat,chatTracker, tcfConfig,picker,observer,chatMethod
+        chatTracker, tcfConfig,picker,observer
     ){
         var startCheckers = [];
         var stopHandlers = [];
@@ -2370,21 +2151,23 @@ define('tcf',
                     성공했을 때 resolve(tcfConfig)를 호출하는 promise
                 )
             */
-            addTextToChatInput : function(html){
-                newChat.chat_input.innerHTML += html;
+            addTextToChatInput : function(txt){
+                chatTracker.chatText = chatTracker.chatText + txt;
             },
             
             get chatCursor(){
-                
+                delete chatCursor;
+                return chatTracker.chatCursor;
             },
             set chatCursor(pos){
-
+                chatTracker.chatCursor = pos;
             },
             get chatText(){
-
+                delete chatText;
+                return chatTracker.chatText;
             },
             set chatText(txt){
-
+                chatTracker.chatText = txt;
             },
             addStartChecker : function(startChecker){
                 startCheckers.push(startChecker);
@@ -2436,7 +2219,7 @@ define('tcf',
                 })
 
                 var connectPromise = new Promise(function(resolve){
-                    Promise.all([chatMethod.connectPromise,statusPromise,masterCheckPromise,getIdPromise]).then(function(values){
+                    Promise.all([statusPromise,masterCheckPromise,getIdPromise]).then(function(values){
                         resolve({result : true , data : values});
                     });
                 } );
@@ -2491,8 +2274,6 @@ require.config = {
         config : 'config',
         twitchTheme : 'twitch_theme',
         picker : 'picker',
-        //pickerManager : 'picker_manager',
-        chatUsingTmi : 'chat_using_tmi',
         chatTarget : 'chat_target',
         newChat : 'new_chat',
         chatTracker : 'chat_tracker',       
