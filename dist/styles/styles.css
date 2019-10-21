@@ -37,24 +37,6 @@ div.new-chat-input {
     display: inline-block;
 }
 
-.nc-light .emote-list-div{
-    background : #ffffff;
-}
-
-.nc-dark .emote-list-div{
-    background: rgb(14,12,19);
-}
-
-.nc-light .new-chat-input {
-    outline : #DAD8DE solid 1px;
-    background: #ffffff;
-}
-
-.nc-dark .new-chat-input {
-    outline : rgb(57,46,92) solid 1px;
-    background: rgb(14,12,19);
-}
-
 
 div.new-chat-pickers {
     position:  absolute;
@@ -120,16 +102,6 @@ div[contenteditable=true]:empty:before{
   content: attr(placeholder);
   display: block; /* For Firefox */
   color : #999;
-}
-
-.nc-light .new-chat-input[contenteditable=true] {
-  color : #111;
-  font-size: 12px;
-}
-
-.nc-dark .new-chat-input[contenteditable=true] {
-  color : #faf9fa;
-  font-size: 12px;
 }
 
 
@@ -249,13 +221,8 @@ div.new-chat-flex-container{
  
 }
 
-.nc-light .nc-pd-1{
-    background-color: #ffffff;
-}
+  
 
-.nc-dark .nc-pd-1{
-    background-color: #201C2B;
-}
 
 .nc-emote-span{
     display:block;
@@ -277,3 +244,89 @@ div.new-chat-flex-container{
 .nc-picker-control {
     text-align: center;
 }
+
+
+/* 트위치 테마 관련 */
+
+.nc-light .nc-pd-1{
+    background-color: #ffffff;
+}
+
+.nc-dark .nc-pd-1{
+    background-color: #201C2B;
+}
+
+
+.nc-light .emote-list-div{
+    background : #ffffff;
+}
+
+.nc-dark .emote-list-div{
+    background: rgb(14,12,19);
+}
+
+.nc-light .new-chat-input {
+    outline : #DAD8DE solid 1px;
+    background: #ffffff;
+}
+
+.nc-dark .new-chat-input {
+    outline : rgb(57,46,92) solid 1px;
+    background: rgb(14,12,19);
+}
+
+
+.nc-light .new-chat-input[contenteditable=true] {
+    color : #111;
+    font-size: 12px;
+}
+
+.nc-dark .new-chat-input[contenteditable=true] {
+    color : #faf9fa;
+    font-size: 12px;
+}
+
+/* 트위치 테마관련 (신) */
+
+section[data-a-target=chat-theme-light] .nc-pd-1{
+    background-color: #ffffff !important;
+}
+
+section[data-a-target=chat-theme-dark] .nc-pd-1{
+    background-color: #201C2B !important;
+}
+
+
+section[data-a-target=chat-theme-light] .emote-list-div{
+    background : #ffffff !important;
+}
+
+section[data-a-target=chat-theme-dark] .emote-list-div{
+    background: rgb(14,12,19) !important;
+}
+
+
+section[data-a-target=chat-theme-light] .new-chat-input {
+    outline : #DAD8DE solid 1px !important;
+    background: #ffffff !important;
+}
+
+section[data-a-target=chat-theme-dark] .new-chat-input {
+    outline : rgb(57,46,92) solid 1px !important;
+    background: rgb(14,12,19) !important;
+}
+
+
+
+section[data-a-target=chat-theme-light] .new-chat-input[contenteditable=true]{
+    color : #111 !important;
+    font-size: 12px !important;
+}
+
+section[data-a-target=chat-theme-dark] .new-chat-input[contenteditable=true]{
+    color : #faf9fa !important;
+    font-size: 12px !important;
+}
+
+
+
