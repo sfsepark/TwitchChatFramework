@@ -124,7 +124,8 @@ var tcfBackground = (function() {
         registerRefresh : function(callback){
             refreshFunctions.push(callback);
         },
-        refresh : refresh
+        refresh : refresh,
+        statusPromise : function(){return tcfStatusPromise;}
     }
     
 })();
