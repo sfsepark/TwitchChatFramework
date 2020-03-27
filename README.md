@@ -11,7 +11,7 @@ DOM 오브젝트 접근으로 처리하기 까다로운 채팅입력창의 value
 
 각 채팅창을 인식하여 특정 채팅창에서 TCF가 어떤역할을 해야하는지 정의할 수 있는 startChecker promise
 
-TCF가 어떤 역할을 해야하는지 정의하는 tcf.config 가 있다.
+TCF가 행동을 정의하는 tcf.config 가 있다.
 
 # tcf config - TCF의 행동을 정의하는 설정
 
