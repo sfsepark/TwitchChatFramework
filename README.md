@@ -1,5 +1,6 @@
 # TwitchChatFramework
 트위치 채팅창 커스텀을 위한 브라우저 익스텐션 프레임워크
+
 1.1.1 패치 이후로 크롬 이외에도 파이어폭스도 지원한다.
 
 # TwitchChatFramework 의 구성요소 - content script
