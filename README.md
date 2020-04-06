@@ -1,7 +1,11 @@
 # TwitchChatFramework
 트위치 채팅창 커스텀을 위한 브라우저 익스텐션 프레임워크
 
-1.1.1 패치 이후로 크롬 이외에도 파이어폭스도 지원한다.
+1.1.1 패치 이후로 크롬 이외에도 파이어폭스도 지원한다.|
+
+# API DOCS 
+
+https://www.notion.so/Twitch-Chat-Framework-daf475317ef644a580eeb5cfcbd78128
 
 # TwitchChatFramework 의 구성요소 - content script
 채팅창을 인식하고 채팅창의 DOM 오브젝트와 관련한 정보를 반환하는 tcf.chatTarget /
